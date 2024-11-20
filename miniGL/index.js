@@ -4,6 +4,7 @@ import { MeshBasicMaterial, ShaderMaterial } from './material.js'
 import { PlaneGeometry } from './geometry.js'
 import { Mesh } from './mesh.js' 
 import { CameraControls } from './controls.js'
+import { Texture } from './texture.js'
 
 export { 
     Scene, 
@@ -13,5 +14,6 @@ export {
     ShaderMaterial, 
     PlaneGeometry, 
     Mesh, 
-    CameraControls 
+    CameraControls,
+    Texture
 }

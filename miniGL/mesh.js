@@ -1,4 +1,3 @@
-// mesh.js
 import { mat4 } from 'gl-matrix';
 
 // Mesh class
@@ -12,23 +11,26 @@ export class Mesh {
     }
 
     initBuffers(gl) {
-        // Create and bind buffers
+        // Create and bind position buffer
         this.buffers.position = gl.createBuffer();
         gl.bindBuffer(gl.ARRAY_BUFFER, this.buffers.position);
         gl.bufferData(gl.ARRAY_BUFFER, this.geometry.vertices, gl.STATIC_DRAW);
 
+        // Create and bind UV buffer if UVs are provided
         if (this.geometry.uvs.length > 0) {
             this.buffers.uv = gl.createBuffer();
             gl.bindBuffer(gl.ARRAY_BUFFER, this.buffers.uv);
             gl.bufferData(gl.ARRAY_BUFFER, this.geometry.uvs, gl.STATIC_DRAW);
         }
 
+        // Create and bind normal buffer if normals are provided
         if (this.geometry.normals.length > 0) {
             this.buffers.normal = gl.createBuffer();
             gl.bindBuffer(gl.ARRAY_BUFFER, this.buffers.normal);
             gl.bufferData(gl.ARRAY_BUFFER, this.geometry.normals, gl.STATIC_DRAW);
         }
 
+        // Create and bind index buffer
         this.buffers.index = gl.createBuffer();
         gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.buffers.index);
         gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, this.geometry.indices, gl.STATIC_DRAW);
@@ -44,7 +46,7 @@ export class Mesh {
 
         // Call onBeforeDraw if it exists
         if (typeof this.onBeforeDraw === 'function') {
-            this.onBeforeDraw();
+            this.onBeforeDraw(gl);
         }
 
         // Set up attributes
@@ -63,7 +65,6 @@ export class Mesh {
                 buffer = this.buffers.normal;
                 size = 3;
             } else {
-                // Handle other attributes if necessary
                 console.warn(`Attribute '${attribName}' is not recognized.`);
                 continue;
             }
@@ -88,8 +89,14 @@ export class Mesh {
                 if (this.material.color) {
                     gl.uniform4fv(uniformLocation, this.material.color);
                 }
+            } else if (uniformName === 'u_map' || uniformName === 'map') {
+                if (this.material.map) {
+                    // Bind the texture
+                    gl.activeTexture(gl.TEXTURE0);
+                    gl.bindTexture(gl.TEXTURE_2D, this.material.map.texture);
+                    gl.uniform1i(uniformLocation, 0); // Texture unit 0
+                }
             } else {
-                // Handle other uniforms if necessary
                 console.warn(`Uniform '${uniformName}' is not recognized.`);
             }
         }

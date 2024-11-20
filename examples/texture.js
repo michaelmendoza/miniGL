@@ -1,8 +1,8 @@
-// examples/dataTextureExample.js
+// examples/textureExample.js
 
 import { WebGLRenderer, Scene, OrthographicCamera, PlaneGeometry, Mesh, MeshBasicMaterial, CameraControls, Texture } from '../miniGL';
 
-export const dataTextureExample = () => {
+export const textureExample = () => {
 
     document.querySelector('#app').innerHTML = `
     <canvas id="glCanvas"></canvas>
@@ -24,29 +24,16 @@ export const dataTextureExample = () => {
     // Create geometry
     const geometry = new PlaneGeometry(2, 2);
 
-    // Create data array
-    const width = 256;
-    const height = 256;
-    const dataArray = new Uint8Array(width * height);
-
-    // Fill the data array with random values
-    for (let i = 0; i < width * height; i++) {
-        dataArray[i] = Math.floor(Math.random() * 256); // Random value between 0 and 255
-    }
-
-    // Create a Texture instance
+    // Create Texture instance for image
     const gl = renderer.gl;
     const texture = new Texture(gl, {
-        data: dataArray,
-        width: width,
-        height: height,
-        format: gl.LUMINANCE,
-        type: gl.UNSIGNED_BYTE,
-        flipY: false,
-        minFilter: gl.NEAREST,
-        magFilter: gl.NEAREST,
+        image: './examples/box.jpg', // Replace with your image path
+        flipY: true, // Flip Y to match WebGL coordinate system
+        minFilter: gl.LINEAR,
+        magFilter: gl.LINEAR,
         wrapS: gl.CLAMP_TO_EDGE,
         wrapT: gl.CLAMP_TO_EDGE,
+        onLoad: startRendering
     });
 
     // Create material with map
@@ -68,5 +55,8 @@ export const dataTextureExample = () => {
         controls.update();
         renderer.render(scene, camera);
     }
-    animate();
+
+    function startRendering() {
+        animate();
+    }
 };
