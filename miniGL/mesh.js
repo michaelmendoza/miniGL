@@ -1,4 +1,5 @@
-import { mat4 } from 'gl-matrix'
+// mesh.js
+import { mat4 } from 'gl-matrix';
 
 // Mesh class
 export class Mesh {
@@ -7,6 +8,7 @@ export class Mesh {
         this.material = material;
         this.modelMatrix = mat4.create();
         this.buffers = {};
+        this.onBeforeDraw = null; // Function to call before drawing
     }
 
     initBuffers(gl) {
@@ -40,18 +42,56 @@ export class Mesh {
 
         gl.useProgram(this.material.program);
 
+        // Call onBeforeDraw if it exists
+        if (typeof this.onBeforeDraw === 'function') {
+            this.onBeforeDraw();
+        }
+
         // Set up attributes
-        gl.bindBuffer(gl.ARRAY_BUFFER, this.buffers.position);
-        gl.enableVertexAttribArray(this.material.attribLocations.position);
-        gl.vertexAttribPointer(this.material.attribLocations.position, 3, gl.FLOAT, false, 0, 0);
+        for (let attribName in this.material.attribLocations) {
+            const attribLocation = this.material.attribLocations[attribName];
+            let buffer = null;
+            let size = 3; // default to 3 components
+
+            if (attribName === 'a_position' || attribName === 'position') {
+                buffer = this.buffers.position;
+                size = 3;
+            } else if (attribName === 'a_uv' || attribName === 'uv') {
+                buffer = this.buffers.uv;
+                size = 2;
+            } else if (attribName === 'a_normal' || attribName === 'normal') {
+                buffer = this.buffers.normal;
+                size = 3;
+            } else {
+                // Handle other attributes if necessary
+                console.warn(`Attribute '${attribName}' is not recognized.`);
+                continue;
+            }
+
+            if (buffer) {
+                gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
+                gl.enableVertexAttribArray(attribLocation);
+                gl.vertexAttribPointer(attribLocation, size, gl.FLOAT, false, 0, 0);
+            }
+        }
 
         // Set up uniforms
-        gl.uniformMatrix4fv(this.material.uniformLocations.projectionMatrix, false, camera.projectionMatrix);
-        gl.uniformMatrix4fv(this.material.uniformLocations.viewMatrix, false, camera.viewMatrix);
-        gl.uniformMatrix4fv(this.material.uniformLocations.modelMatrix, false, this.modelMatrix);
-
-        if (this.material.uniformLocations.color) {
-            gl.uniform4fv(this.material.uniformLocations.color, this.material.color);
+        for (let uniformName in this.material.uniformLocations) {
+            const uniformLocation = this.material.uniformLocations[uniformName];
+            if (uniformName === 'u_projectionMatrix' || uniformName === 'projectionMatrix') {
+                gl.uniformMatrix4fv(uniformLocation, false, camera.projectionMatrix);
+            } else if (uniformName === 'u_viewMatrix' || uniformName === 'viewMatrix') {
+                gl.uniformMatrix4fv(uniformLocation, false, camera.viewMatrix);
+            } else if (uniformName === 'u_modelMatrix' || uniformName === 'modelMatrix') {
+                gl.uniformMatrix4fv(uniformLocation, false, this.modelMatrix);
+            } else if (uniformName === 'u_color' || uniformName === 'color') {
+                if (this.material.color) {
+                    gl.uniform4fv(uniformLocation, this.material.color);
+                }
+            } else {
+                // Handle other uniforms if necessary
+                console.warn(`Uniform '${uniformName}' is not recognized.`);
+            }
         }
 
         // Bind index buffer and draw
