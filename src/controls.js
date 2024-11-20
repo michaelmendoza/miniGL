@@ -1,8 +1,17 @@
 
 export class CameraControls {
 
-    constructor (camera, renderer, canvas) {
+    constructor (camera, renderer, canvas, options = {}) {
     
+        // Set default options
+        this.dragSensitivity = options.dragSensitivity || 1.0;
+        this.zoomSensitivity = options.zoomSensitivity || 1.0;
+
+        // Store references to the camera, renderer and canvas
+        this.camera = camera;
+        this.renderer = renderer;
+        this.canvas = canvas;
+
         // Implement pan and zoom controls
         let isDragging = false;
         let lastX, lastY;
@@ -15,8 +24,8 @@ export class CameraControls {
 
         canvas.addEventListener('mousemove', (e) => {
             if (isDragging) {
-                const dx = (e.clientX - lastX) / canvas.clientWidth * 2;
-                const dy = (e.clientY - lastY) / canvas.clientHeight * 2;
+                const dx = (e.clientX - lastX) / canvas.clientWidth * 2 * this.dragSensitivity;
+                const dy = (e.clientY - lastY) / canvas.clientHeight * 2 * this.dragSensitivity;
                 camera.pan(dx, dy);
                 lastX = e.clientX;
                 lastY = e.clientY;
@@ -34,9 +43,9 @@ export class CameraControls {
         canvas.addEventListener('wheel', (e) => {
             e.preventDefault();
             if (e.deltaY < 0) {
-                camera.zoomIn(1.1);
+                camera.zoomIn(1.1 * this.zoomSensitivity);
             } else {
-                camera.zoomOut(1.1);
+                camera.zoomOut(1.1 * this.zoomSensitivity);
             }
         });
 
