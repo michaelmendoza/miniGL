@@ -107,4 +107,23 @@ export class DataTexture extends Texture {
         super(gl, options);
         this.data = options.data;
     }
+
+    update(data) {
+        const gl = this.gl;
+        this.data = data;
+
+        // Update the mask texture
+        gl.bindTexture(gl.TEXTURE_2D, this.texture);
+        gl.texSubImage2D(
+            gl.TEXTURE_2D,
+            0,
+            0,
+            0,
+            this.width,
+            this.height,
+            gl.LUMINANCE,
+            gl.UNSIGNED_BYTE,
+            this.data
+        );
+    }
 }

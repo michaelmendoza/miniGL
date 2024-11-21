@@ -44,6 +44,28 @@ export class Mesh {
 
         gl.useProgram(this.material.program);
 
+        // Save current depth test, depth write, and blend state
+        const depthTestEnabled = gl.isEnabled(gl.DEPTH_TEST);
+        const depthMaskEnabled = gl.getParameter(gl.DEPTH_WRITEMASK);
+        const blendEnabled = gl.isEnabled(gl.BLEND);
+
+        // Set depth test
+        if (this.material.depthTest) {
+            if (!depthTestEnabled) gl.enable(gl.DEPTH_TEST);
+        } else {
+            if (depthTestEnabled) gl.disable(gl.DEPTH_TEST);
+        }
+
+        // Set depth write
+        gl.depthMask(this.material.depthWrite);
+
+        // Set blending
+        if (this.material.transparent) {
+            if (!blendEnabled) gl.enable(gl.BLEND);
+        } else {
+            if (blendEnabled) gl.disable(gl.BLEND);
+        }
+
         // Call onBeforeDraw if it exists
         if (typeof this.onBeforeDraw === 'function') {
             this.onBeforeDraw(gl);
@@ -104,5 +126,36 @@ export class Mesh {
         // Bind index buffer and draw
         gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.buffers.index);
         gl.drawElements(gl.TRIANGLES, this.geometry.indices.length, gl.UNSIGNED_SHORT, 0);
+    
+        // Restore previous depth test, depth write, and blend state
+        if (depthTestEnabled) {
+            gl.enable(gl.DEPTH_TEST);
+        } else {
+            gl.disable(gl.DEPTH_TEST);
+        }
+
+        gl.depthMask(depthMaskEnabled);
+
+        if (blendEnabled) {
+            gl.enable(gl.BLEND);
+        } else {
+            gl.disable(gl.BLEND);
+        }
+    }
+
+    translate(x, y, z) {
+        mat4.translate(this.modelMatrix, this.modelMatrix, [x, y, z]);
+    }
+
+    rotateX(angle) {
+        mat4.rotateX(this.modelMatrix, this.modelMatrix, angle);
+    }
+
+    rotateY(angle) {
+        mat4.rotateY(this.modelMatrix, this.modelMatrix, angle);
+    }
+
+    rotateZ(angle) {
+        mat4.rotateZ(this.modelMatrix, this.modelMatrix, angle);
     }
 }

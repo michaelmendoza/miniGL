@@ -33,6 +33,10 @@ export class WebGLRenderer {
         // Set clear color
         this.gl.clearColor(0, 0, 0, 1);
 
+        // Enable blending
+        this.gl.enable(this.gl.BLEND);
+        this.gl.blendFunc(this.gl.SRC_ALPHA, this.gl.ONE_MINUS_SRC_ALPHA);
+
         // Handle window resize
         window.addEventListener('resize', () => this.onResize());
         this.onResize();
