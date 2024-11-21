@@ -12,6 +12,8 @@ export class Geometry {
 export class PlaneGeometry extends Geometry {
     constructor(width = 1, height = 1) {
         super();
+        this.width = width;    
+        this.height = height;  
         const w = width / 2;
         const h = height / 2;
         this.vertices = new Float32Array([
@@ -43,6 +45,9 @@ export class PlaneGeometry extends Geometry {
 export class BoxGeometry extends Geometry {
     constructor(width = 1, height = 1, depth = 1) {
         super();
+        this.width = width;
+        this.height = height;
+        this.depth = depth;
         const w = width / 2;
         const h = height / 2;
         const d = depth / 2;

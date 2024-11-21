@@ -98,7 +98,7 @@ export class DataTexture extends Texture {
         // Set default options for data textures
         options.format = options.format || gl.LUMINANCE;
         options.type = options.type || gl.UNSIGNED_BYTE;
-        options.flipY = options.flipY || false;
+        options.flipY = options.flipY || true;
         options.minFilter = options.minFilter || gl.NEAREST;
         options.magFilter = options.magFilter || gl.NEAREST;
         options.wrapS = options.wrapS || gl.CLAMP_TO_EDGE;

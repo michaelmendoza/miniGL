@@ -5,6 +5,7 @@ import { PlaneGeometry } from './geometry.js'
 import { Mesh } from './mesh.js' 
 import { CameraControls } from './controls.js'
 import { Texture, DataTexture } from './texture.js'
+import { Raycaster } from './raycaster.js'
 
 export { 
     Scene, 
@@ -16,5 +17,6 @@ export {
     Mesh, 
     CameraControls,
     Texture,
-    DataTexture
+    DataTexture,
+    Raycaster
 }
