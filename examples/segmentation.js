@@ -7,6 +7,11 @@ export const segmentationExample = () => {
 
     document.querySelector('#app').innerHTML = `
     <canvas id="glCanvas"></canvas>
+    <div id="controls" style="position: absolute; top: 10px; right: 10px; color: white; background: rgba(0,0,0,0.7); padding: 10px;">
+        <label for="brushSize">Brush Size:</label>
+        <input type="range" id="brushSize" name="brushSize" min="1" max="50" value="10">
+        <button id="modeButton">Mode: Add</button>
+    </div>
     <div id="info" style="position: absolute; top: 10px; left: 10px; color: white; background: rgba(0,0,0,0.7); padding: 5px;"></div>
     <div id="stats" style="position: absolute; top: 80px; left: 10px; color: white; background: rgba(0,0,0,0.7); padding: 5px;"></div>
     `;
@@ -15,14 +20,26 @@ export const segmentationExample = () => {
     const canvas = document.getElementById('glCanvas');
     const infoDiv = document.getElementById('info');
     const statsDiv = document.getElementById('stats');
+    const brushSizeInput = document.getElementById('brushSize');
+    const modeButton = document.getElementById('modeButton');
+
+    // Variables to store the brush size and mode
+    let brushSize = parseInt(brushSizeInput.value);
+    let mode = 'add'; // or 'remove'
+
+    // Event listener for brush size change
+    brushSizeInput.addEventListener('input', () => {
+        brushSize = parseInt(brushSizeInput.value);
+    });
+
+    // Event listener for mode toggle
+    modeButton.addEventListener('click', () => {
+        mode = mode === 'add' ? 'remove' : 'add';
+        modeButton.textContent = `Mode: ${mode.charAt(0).toUpperCase() + mode.slice(1)}`;
+    });
 
     // Initialize renderer
     const renderer = new WebGLRenderer({ canvas });
-
-    // Enable blending for transparency
-    const gl = renderer.gl;
-    gl.enable(gl.BLEND);
-    gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
 
     // Create scene
     const scene = new Scene();
@@ -47,7 +64,7 @@ export const segmentationExample = () => {
     }
 
     // Create data texture
-    const dataTexture = new DataTexture(gl, {
+    const dataTexture = new DataTexture(renderer.gl, {
         data: dataArray,
         width: width,
         height: height,
@@ -67,7 +84,7 @@ export const segmentationExample = () => {
     const maskArray = new Uint8Array(width * height);
 
     // Create mask texture
-    const maskTexture = new DataTexture(gl, {
+    const maskTexture = new DataTexture(renderer.gl, {
         data: maskArray,
         width: width,
         height: height,
@@ -106,8 +123,25 @@ export const segmentationExample = () => {
     }
     animate();
 
+    let isDrawing = false;
+
+    // Mouse down event listener to start drawing
+    canvas.addEventListener('mousedown', (event) => {
+        isDrawing = true;
+        applyBrush(event);
+    });
+
+    // Mouse up event listener to stop drawing
+    canvas.addEventListener('mouseup', () => {
+        isDrawing = false;
+    });
+
     // Mouse move event listener
     canvas.addEventListener('mousemove', (event) => {
+        if (isDrawing) {
+            applyBrush(event);
+        }
+
         // Get mouse NDC coordinates
         const ndcCoords = getMouseNDC(event, canvas);
 
@@ -143,8 +177,7 @@ export const segmentationExample = () => {
         infoDiv.innerHTML = '';
     });
 
-    // Mouse click event listener to toggle mask
-    canvas.addEventListener('click', (event) => {
+    function applyBrush(event) {
         // Get mouse NDC coordinates
         const ndcCoords = getMouseNDC(event, canvas);
 
@@ -165,10 +198,11 @@ export const segmentationExample = () => {
             const x = Math.floor(u * (width - 1) + 0.5);
             const y = Math.floor((1 - v) * (height - 1) + 0.5); // Flip Y axis
 
-            const index = y * width + x;
+            //const index = y * width + x;
 
             // Toggle mask value
-            maskArray[index] = maskArray[index] === 0 ? 255 : 0;
+            //maskArray[index] = maskArray[index] === 0 ? 255 : 0;
+            applyBrushToMask(x, y);
 
             // Update the mask texture with the new mask array
             maskTexture.update(maskArray);
@@ -176,18 +210,46 @@ export const segmentationExample = () => {
             // Recalculate statistics
             updateStatistics();
         }
-    });
+    };
+
+    function applyBrushToMask(centerX, centerY) {
+        const radius = brushSize / 2;
+
+        for (let y = -radius; y < radius; y++) {
+            for (let x = -radius; x <= radius; x++) {
+                const dx = x;
+                const dy = y;
+                const distance = Math.sqrt(dx * dx + dy * dy);
+
+                if (distance < radius) { // Circle brush
+                    const imgX = centerX + x;
+                    const imgY = centerY + y;
+
+                    // Check bounds
+                    if (imgX >= 0 && imgX < width && imgY >= 0 && imgY < height) {
+                        const index = imgY * width + imgX;
+
+                        if (mode === 'add') {
+                            maskArray[index] = 255;
+                        } else if (mode === 'remove') {
+                            maskArray[index] = 0;
+                        }
+                    }
+                }
+            }
+        }
+    }
 
     // Function to update statistics based on the mask
     function updateStatistics() {
         maskValues = [];
 
         for (let i = 0; i < maskArray.length; i++) {
-            if (maskArray[i] === 1) {
+            if (maskArray[i] != 0 ) {
                 maskValues.push(dataArray[i]);
             }
         }
-
+        
         if (maskValues.length > 0) {
             const sum = maskValues.reduce((a, b) => a + b, 0);
             mean = sum / maskValues.length;

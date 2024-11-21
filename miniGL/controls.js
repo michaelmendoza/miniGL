@@ -66,8 +66,19 @@ export class CameraControls {
     }
 
     resize() {
+        const canvas = this.canvas;
+        const camera = this.camera;
+        
+        // Update camera aspect ratio
+        function updateCameraAspect() {
+            const aspect = canvas.clientWidth / canvas.clientHeight;
+            camera.left = -aspect;
+            camera.right = aspect;
+            camera.updateProjectionMatrix();
+        }
+
         // Ensure the canvas size matches its display size
-        function resizeCanvasToDisplaySize(canvas) {
+        function resizeCanvasToDisplaySize() {
             const displayWidth  = canvas.clientWidth;
             const displayHeight = canvas.clientHeight;
 
@@ -83,22 +94,8 @@ export class CameraControls {
             }
         }
 
-        // Resize the canvas on window resize
-        window.addEventListener('resize', () => {
-            resizeCanvasToDisplaySize(this.canvas);
-        });
-
-        // Initial resize
-        resizeCanvasToDisplaySize(this.canvas);
-
-        // Update camera aspect ratio
-        function updateCameraAspect() {
-            const aspect = this.canvas.clientWidth / this.canvas.clientHeight;
-            this.camera.left = -aspect;
-            this.camera.right = aspect;
-            this.camera.updateProjectionMatrix();
-        }
-
         window.addEventListener('resize', updateCameraAspect);
+        window.addEventListener('resize', resizeCanvasToDisplaySize);
+        resizeCanvasToDisplaySize(canvas);
     }
 }
