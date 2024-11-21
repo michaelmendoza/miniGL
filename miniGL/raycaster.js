@@ -93,30 +93,40 @@ export class Raycaster {
                 const localPoint = vec3.create();
                 vec3.transformMat4(localPoint, point, inverseModelMatrix);
 
-                // Compute UV coordinates
+                // Retrieve the correct width and height from the geometry
                 const width = object.geometry.width;
                 const height = object.geometry.height;
 
-                const u = Math.min(Math.max((localPoint[0] + width / 2) / width, 0), 1);
-                const v = Math.min(Math.max((localPoint[1] + height / 2) / height, 0), 1);
+                // Check if the local point is within the plane bounds
+                const halfWidth = width / 2;
+                const halfHeight = height / 2;
 
-                const uv = vec2.fromValues(u, v);
+                if (
+                    localPoint[0] >= -halfWidth && localPoint[0] <= halfWidth &&
+                    localPoint[1] >= -halfHeight && localPoint[1] <= halfHeight
+                ) {
+                    // Compute UV coordinates
+                    const u = (localPoint[0] + halfWidth) / width;
+                    const v = (localPoint[1] + halfHeight) / height;
+                    const uv = vec2.fromValues(u, v);
 
-                // Normal at intersection
-                const normal = vec3.clone(planeNormal);
+                    // Normal at intersection
+                    const normal = vec3.clone(planeNormal);
 
-                const distance = t;
+                    const distance = t;
 
-                return {
-                    distance: distance,
-                    point: point,
-                    object: object,
-                    uv: uv,
-                    normal: normal
-                };
+                    return {
+                        distance: distance,
+                        point: point,
+                        object: object,
+                        uv: uv,
+                        normal: normal
+                    };
+                }
             }
         }
 
-        return null;
+        return null; // No valid intersection within the plane bounds
     }
+
 }
