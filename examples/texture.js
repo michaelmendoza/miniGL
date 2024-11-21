@@ -28,12 +28,7 @@ export const textureExample = () => {
     const gl = renderer.gl;
     const texture = new Texture(gl, {
         image: './examples/box.jpg', // Replace with your image path
-        flipY: true, // Flip Y to match WebGL coordinate system
-        minFilter: gl.LINEAR,
-        magFilter: gl.LINEAR,
-        wrapS: gl.CLAMP_TO_EDGE,
-        wrapT: gl.CLAMP_TO_EDGE,
-        onLoad: startRendering
+        onLoad: animate
     });
 
     // Create material with map
@@ -56,7 +51,4 @@ export const textureExample = () => {
         renderer.render(scene, camera);
     }
 
-    function startRendering() {
-        animate();
-    }
 };

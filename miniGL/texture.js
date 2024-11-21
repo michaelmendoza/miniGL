@@ -1,5 +1,4 @@
-// miniGL/texture.js
-
+/** Texture class: Handles 2D textures  */
 export class Texture {
     constructor(gl, options = {}) {
         this.gl = gl;
@@ -90,5 +89,22 @@ export class Texture {
         if (this.onLoad) {
             this.onLoad();
         }
+    }
+}
+
+/** DataTexture class: Transforms 2D data into a 2D texture */
+export class DataTexture extends Texture {
+    constructor(gl, options = {}) {
+        // Set default options for data textures
+        options.format = options.format || gl.LUMINANCE;
+        options.type = options.type || gl.UNSIGNED_BYTE;
+        options.flipY = options.flipY || false;
+        options.minFilter = options.minFilter || gl.NEAREST;
+        options.magFilter = options.magFilter || gl.NEAREST;
+        options.wrapS = options.wrapS || gl.CLAMP_TO_EDGE;
+        options.wrapT = options.wrapT || gl.CLAMP_TO_EDGE;
+        
+        super(gl, options);
+        this.data = options.data;
     }
 }

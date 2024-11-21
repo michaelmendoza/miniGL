@@ -1,6 +1,6 @@
 // examples/dataTextureExample.js
 
-import { WebGLRenderer, Scene, OrthographicCamera, PlaneGeometry, Mesh, MeshBasicMaterial, CameraControls, Texture } from '../miniGL';
+import { WebGLRenderer, Scene, OrthographicCamera, PlaneGeometry, Mesh, MeshBasicMaterial, CameraControls, DataTexture } from '../miniGL';
 
 export const dataTextureExample = () => {
 
@@ -36,17 +36,10 @@ export const dataTextureExample = () => {
 
     // Create a Texture instance
     const gl = renderer.gl;
-    const texture = new Texture(gl, {
+    const texture = new DataTexture(gl, {
         data: dataArray,
         width: width,
-        height: height,
-        format: gl.LUMINANCE,
-        type: gl.UNSIGNED_BYTE,
-        flipY: false,
-        minFilter: gl.NEAREST,
-        magFilter: gl.NEAREST,
-        wrapS: gl.CLAMP_TO_EDGE,
-        wrapT: gl.CLAMP_TO_EDGE,
+        height: height
     });
 
     // Create material with map
