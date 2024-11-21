@@ -135,8 +135,8 @@ export class DataSegmentationMask {
     update = (event) => {
         this.maskRaycaster.intersectData(event, (data) => {  
             if (data !== null) {
-                this.maskBrush.applyBrushToData(data.x, data.y);        // Toggle mask values with brush in maskArray
-                this.maskTexture.update(this.maskTexture.data);                // Update the mask texture with the new mask array
+                this.maskBrush.applyBrushToData(data.x, data.y);                      // Toggle mask values with brush in maskArray
+                this.maskTexture.update(this.maskTexture.data);                       // Update the mask texture with the new mask array
                 this.dataStats.update(this.dataTexture.data, this.maskTexture.data);  // Recalculate statistics
                 if (this.onUpdate) {
                     this.onUpdate(data);
@@ -144,4 +144,26 @@ export class DataSegmentationMask {
             }
         });
     };
+}
+
+class DataLayerCanvas {
+    constructor() {
+        this.texture = new DataTexture(renderer.gl, {
+            data: dataArray,
+            width: width,
+            height: height,
+        });
+    }
+}
+
+class DataCanvas { 
+    constructor(layers, renderer) {
+        this.renderer = renderer;
+        this.canvas = renderer.canvas;
+        this.camera = renderer.camera;
+
+        this.layers = layers.map((layer) => {
+            return new DataLayerCanvas(layer);
+        });
+    }
 }
