@@ -1,6 +1,6 @@
 // examples/dataTextureExample.js
 
-import { WebGLRenderer, Scene, OrthographicCamera, PlaneGeometry, Mesh, MeshBasicMaterial, CameraControls, DataTexture, Raycaster } from '../miniGL';
+import { WebGLRenderer, Scene, OrthographicCamera, PlaneGeometry, Mesh, MeshBasicMaterial, CameraControls, DataTexture, DataTextureRaycaster } from '../miniGL';
 
 export const dataTextureRaycastExample = () => {
 
@@ -68,71 +68,29 @@ export const dataTextureRaycastExample = () => {
     animate();
 
     // Raycaster
-    const raycaster = new Raycaster();
+    const raycaster = new DataTextureRaycaster(texture, canvas, scene, camera);
 
     // Canvas click event listener
     canvas.addEventListener('click', (event) => {
-        // Get mouse NDC coordinates
-        const ndcCoords = getMouseNDC(event, canvas);
-
-        // Set ray from camera
-        raycaster.setFromCamera(ndcCoords, camera);
-
-        // Intersect objects in the scene
-        const intersects = raycaster.intersectObject(scene.children);
-
-        if (intersects.length > 0) {
-            const intersect = intersects[0];
-            const uv = intersect.uv;
-
-            // Compute data texture value at the UV coordinates
-            const u = uv[0];
-            const v = uv[1];
-
-            // Data texture coordinates
-            const x = Math.floor(u * (width - 1));
-            const y = Math.floor((1 - v) * (height - 1)); // Flip Y axis
-
-            const index = y * width + x;
-            const value = dataArray[index];
-
-            console.log(`Clicked at UV: (${u.toFixed(3)}, ${v.toFixed(3)})`);
-            console.log(`Data value at (${x}, ${y}): ${value}`);
-        } else {
-            console.log('No intersection');
-        }
+        raycaster.intersectData(event, (data) => {            
+            if (data !== null) {
+                console.log(`Clicked at UV: (${data.x.toFixed(3)}, ${data.y.toFixed(3)})`);
+                console.log(`Data value at (${data.x}, ${data.y}): ${data.value}`);
+            } else { 
+                console.log('No intersection');
+            }
+        });   
     });
 
     // Mouse move event listener
     canvas.addEventListener('mousemove', (event) => {
-        // Get mouse NDC coordinates
-        const ndcCoords = getMouseNDC(event, canvas);
-
-        // Set ray from camera
-        raycaster.setFromCamera(ndcCoords, camera);
-
-        // Intersect objects in the scene
-        const intersects = raycaster.intersectObject(scene.children);
-
-        if (intersects.length > 0) {
-            const intersect = intersects[0];
-            const uv = intersect.uv;
-
-            // Compute data texture value at the UV coordinates
-            const u = uv[0];
-            const v = uv[1];
-
-            // Data texture coordinates
-            const x = Math.floor(u * (width - 1));
-            const y = Math.floor((1 - v) * (height - 1)); // Flip Y axis
-
-            const index = y * width + x;
-            const value = dataArray[index];
-
-            infoDiv.innerHTML = `Data Index: (${x}, ${y})<br>Value: ${value.toFixed(2)}`;
-        } else {
-            infoDiv.innerHTML = 'No intersection';
-        }
+        raycaster.intersectData(event, (data) => {     
+            if (data !== null) {
+                infoDiv.innerHTML = `Data Index: (${data.x}, ${data.y})<br>Value: ${data.value.toFixed(2)}`;
+            } else {
+                infoDiv.innerHTML = 'No intersection';
+            }
+        });   
     });
 
     // Mouse leave event listener to clear info
@@ -140,11 +98,4 @@ export const dataTextureRaycastExample = () => {
         infoDiv.innerHTML = '';
     });
 
-    // Function to convert mouse event to NDC coordinates
-    function getMouseNDC(event, canvas) {
-        const rect = canvas.getBoundingClientRect();
-        const x = ((event.clientX - rect.left) / canvas.clientWidth) * 2 - 1;
-        const y = -((event.clientY - rect.top) / canvas.clientHeight) * 2 + 1;
-        return { x: x, y: y };
-    }
 };

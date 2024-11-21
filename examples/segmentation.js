@@ -1,7 +1,6 @@
 // examples/segmentationExample.js
 
-import { WebGLRenderer, Scene, OrthographicCamera, PlaneGeometry, Mesh, MeshBasicMaterial, CameraControls, DataTexture, Raycaster } from '../miniGL';
-import { mat4 } from 'gl-matrix';
+import { WebGLRenderer, Scene, OrthographicCamera, PlaneGeometry, Mesh, MeshBasicMaterial, CameraControls, DataTexture, DataTextureRaycaster, DataStats, DataBrush, DataSegmentationMask } from '../miniGL';
 
 export const segmentationExample = () => {
 
@@ -30,12 +29,16 @@ export const segmentationExample = () => {
     // Event listener for brush size change
     brushSizeInput.addEventListener('input', () => {
         brushSize = parseInt(brushSizeInput.value);
+        maskSegmentation.setBrushSize(brushSize);
+        console.log('brushSize: ' + brushSize);
     });
 
     // Event listener for mode toggle
     modeButton.addEventListener('click', () => {
         mode = mode === 'add' ? 'remove' : 'add';
         modeButton.textContent = `Mode: ${mode.charAt(0).toUpperCase() + mode.slice(1)}`;
+        maskSegmentation.setBrushMode(mode);
+        console.log('mode: ' + mode);
     });
 
     // Initialize renderer
@@ -105,15 +108,40 @@ export const segmentationExample = () => {
     // Camera controls
     const controls = new CameraControls(camera, renderer, canvas, { useDrag: false });
 
-    // Raycaster
-    const raycaster = new Raycaster();
+    // Segmentation mask setup
+    const maskSegmentation = new DataSegmentationMask(dataTexture, maskTexture, canvas, scene, camera, brushSize);
+    
+    const onMouseMove = (data) => {
+        if (data !== null) {
+            infoDiv.innerHTML = `Data Index: (${data.x}, ${data.y})<br>Value: ${data.value.toFixed(2)}`;
+        } else {
+            infoDiv.innerHTML = 'No intersection';
+        }
+    };
 
-    // Variables to store statistics
-    let maskValues = [];
-    let mean = 0;
-    let min = 0;
-    let max = 0;
-    let stdDev = 0;
+    const onMouseLeave = () => {
+        if (infoDiv) {
+            infoDiv.innerHTML = '';
+        }
+    };
+
+    const onUpdate = (data) => {
+        const dataStats = maskSegmentation.dataStats;
+        if (dataStats.count > 0) {
+            statsDiv.innerHTML = `
+                <strong>Statistics for Masked Region:</strong><br>
+                Mean: ${dataStats.mean.toFixed(2)}<br>
+                Min: ${dataStats.min.toFixed(2)}<br>
+                Max: ${dataStats.max.toFixed(2)}<br>
+                Std Dev: ${dataStats.stdDev.toFixed(2)}<br>
+                Count: ${dataStats.count}
+            `;
+        } else {
+            statsDiv.innerHTML = `<strong>No data in mask.</strong>`;
+        }
+    };
+
+    maskSegmentation.setEventListeners(onMouseMove, onMouseLeave, onUpdate);
 
     // Render loop
     function animate() {
@@ -123,161 +151,4 @@ export const segmentationExample = () => {
     }
     animate();
 
-    let isDrawing = false;
-
-    // Mouse down event listener to start drawing
-    canvas.addEventListener('mousedown', (event) => {
-        isDrawing = true;
-        applyBrush(event);
-    });
-
-    // Mouse up event listener to stop drawing
-    canvas.addEventListener('mouseup', () => {
-        isDrawing = false;
-    });
-
-    // Mouse move event listener
-    canvas.addEventListener('mousemove', (event) => {
-        if (isDrawing) {
-            applyBrush(event);
-        }
-
-        // Get mouse NDC coordinates
-        const ndcCoords = getMouseNDC(event, canvas);
-
-        // Set ray from camera
-        raycaster.setFromCamera(ndcCoords, camera);
-
-        // Intersect objects in the scene
-        const intersects = raycaster.intersectObject(dataMesh);
-
-        if (intersects.length > 0) {
-            const intersect = intersects[0];
-            const uv = intersect.uv;
-
-            // Compute data texture value at the UV coordinates
-            const u = uv[0];
-            const v = uv[1];
-
-            // Data texture coordinates
-            const x = Math.floor(u * (width - 1));
-            const y = Math.floor((1 - v) * (height - 1)); // Flip Y axis
-
-            const index = y * width + x;
-            const value = dataArray[index];
-
-            infoDiv.innerHTML = `Data Index: (${x}, ${y})<br>Value: ${value.toFixed(2)}`;
-        } else {
-            infoDiv.innerHTML = 'No intersection';
-        }
-    });
-
-    // Mouse leave event listener to clear info
-    canvas.addEventListener('mouseleave', () => {
-        infoDiv.innerHTML = '';
-    });
-
-    function applyBrush(event) {
-        // Get mouse NDC coordinates
-        const ndcCoords = getMouseNDC(event, canvas);
-
-        // Set ray from camera
-        raycaster.setFromCamera(ndcCoords, camera);
-
-        // Intersect with dataMesh (or maskMesh)
-        const intersects = raycaster.intersectObject(dataMesh);
-
-        if (intersects.length > 0) {
-            const intersect = intersects[0];
-            const uv = intersect.uv;
-
-            const u = uv[0];
-            const v = uv[1];
-
-            // Data texture coordinates
-            const x = Math.floor(u * (width - 1) + 0.5);
-            const y = Math.floor((1 - v) * (height - 1) + 0.5); // Flip Y axis
-
-            //const index = y * width + x;
-
-            // Toggle mask value
-            //maskArray[index] = maskArray[index] === 0 ? 255 : 0;
-            applyBrushToMask(x, y);
-
-            // Update the mask texture with the new mask array
-            maskTexture.update(maskArray);
-
-            // Recalculate statistics
-            updateStatistics();
-        }
-    };
-
-    function applyBrushToMask(centerX, centerY) {
-        const radius = brushSize / 2;
-
-        for (let y = -radius; y < radius; y++) {
-            for (let x = -radius; x <= radius; x++) {
-                const dx = x;
-                const dy = y;
-                const distance = Math.sqrt(dx * dx + dy * dy);
-
-                if (distance < radius) { // Circle brush
-                    const imgX = centerX + x;
-                    const imgY = centerY + y;
-
-                    // Check bounds
-                    if (imgX >= 0 && imgX < width && imgY >= 0 && imgY < height) {
-                        const index = imgY * width + imgX;
-
-                        if (mode === 'add') {
-                            maskArray[index] = 255;
-                        } else if (mode === 'remove') {
-                            maskArray[index] = 0;
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-    // Function to update statistics based on the mask
-    function updateStatistics() {
-        maskValues = [];
-
-        for (let i = 0; i < maskArray.length; i++) {
-            if (maskArray[i] != 0 ) {
-                maskValues.push(dataArray[i]);
-            }
-        }
-        
-        if (maskValues.length > 0) {
-            const sum = maskValues.reduce((a, b) => a + b, 0);
-            mean = sum / maskValues.length;
-
-            min = Math.min(...maskValues);
-            max = Math.max(...maskValues);
-
-            const variance = maskValues.reduce((a, b) => a + Math.pow(b - mean, 2), 0) / maskValues.length;
-            stdDev = Math.sqrt(variance);
-
-            statsDiv.innerHTML = `
-                <strong>Statistics for Masked Region:</strong><br>
-                Mean: ${mean.toFixed(2)}<br>
-                Min: ${min.toFixed(2)}<br>
-                Max: ${max.toFixed(2)}<br>
-                Std Dev: ${stdDev.toFixed(2)}<br>
-                Count: ${maskValues.length}
-            `;
-        } else {
-            statsDiv.innerHTML = `<strong>No data in mask.</strong>`;
-        }
-    }
-
-    // Function to convert mouse event to NDC coordinates
-    function getMouseNDC(event, canvas) {
-        const rect = canvas.getBoundingClientRect();
-        const x = ((event.clientX - rect.left) / canvas.clientWidth) * 2 - 1;
-        const y = -((event.clientY - rect.top) / canvas.clientHeight) * 2 + 1;
-        return { x: x, y: y };
-    }
 };

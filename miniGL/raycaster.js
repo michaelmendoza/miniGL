@@ -3,6 +3,7 @@
 import { vec3, mat4, vec2 } from 'gl-matrix';
 import { PlaneGeometry } from './geometry.js';
 
+/** Basic raycaster class: Implements raycasting for objects (PlaneGeometry only for now) */
 export class Raycaster {
     constructor() {
         this.origin = vec3.create();
@@ -129,4 +130,54 @@ export class Raycaster {
         return null; // No valid intersection within the plane bounds
     }
 
+}
+
+/** DataTextureRaycaster class: Implements raycasting for DataTextures */
+export class DataTextureRaycaster {
+    constructor(texture, canvas, scene, camera) {
+        this.texture = texture;
+        this.canvas = canvas;
+        this.scene = scene;
+        this.camera = camera;
+        this.raycaster = new Raycaster();    
+    }
+
+    intersectData = (event, callback) => {
+        // Get mouse NDC coordinates
+        const ndcCoords = this.getMouseNDC(event);
+
+        // Set ray from camera
+        this.raycaster.setFromCamera(ndcCoords, this.camera);
+
+        // Intersect objects in the scene
+        const intersects = this.raycaster.intersectObject(this.scene.children);
+
+        if (intersects.length > 0) {
+            const intersect = intersects[0];
+            const uv = intersect.uv;
+
+            // Compute data texture value at the UV coordinates
+            const u = uv[0];
+            const v = uv[1];
+
+            // Data texture coordinates
+            const x = Math.floor(u * (this.texture.width - 1));
+            const y = Math.floor((1 - v) * (this.texture.height - 1)); // Flip Y axis
+
+            const index = y * this.texture.width + x;
+            const value = this.texture.data[index];
+
+            callback({ x, y, value });
+        } else {
+            callback(null);
+        }
+    };
+
+     // Function to convert mouse event to NDC coordinates
+    getMouseNDC = (event) => {
+        const rect = this.canvas.getBoundingClientRect();
+        const x = ((event.clientX - rect.left) / this.canvas.clientWidth) * 2 - 1;
+        const y = -((event.clientY - rect.top) / this.canvas.clientHeight) * 2 + 1;
+        return { x: x, y: y };
+    }
 }

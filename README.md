@@ -1,6 +1,6 @@
 # WebGL Renderer and Examples
 
-This project demonstrates how to create a simple WebGL renderer with an API inspired by [THREE.js](https://threejs.org/). It includes fundamental components such as `Scene`, `Mesh`, `Material`, `Geometry`, `Texture`, and `Camera`, bundled into a minimal library called `miniGL`. The repository features several examples showcasing different functionalities like data textures, raycasting, custom shaders, blending, and interactive segmentation.
+This project demonstrates how to create a simple WebGL renderer with an API inspired by [THREE.js](https://threejs.org/). It includes fundamental components such as `Scene`, `Mesh`, `Material`, `Geometry`, `Texture`, and `Camera`, bundled into a minimal library called `miniGL`. The repository features several examples showcasing different functionalities like data textures, raycasting, custom shaders, blending, and interactive segmentation. A primary focus of this project is to provide a simple and intuitive API for creating data-driven interactive webgl visualizations.
 
 ## Table of Contents
 
