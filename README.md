@@ -1,166 +1,235 @@
-# WebGL Renderer Example
+# WebGL Renderer and Examples
 
-This project demonstrates how to create a simple WebGL renderer with an API similar to [THREE.js](https://threejs.org/). It includes basic components such as `Scene`, `Mesh`, `Material`, `Geometry`, `Texture`, and `Camera`. The example renders a plane geometry with pan and zoom capabilities using an orthographic camera.
+This project demonstrates how to create a simple WebGL renderer with an API inspired by [THREE.js](https://threejs.org/). It includes fundamental components such as `Scene`, `Mesh`, `Material`, `Geometry`, `Texture`, and `Camera`, bundled into a minimal library called `miniGL`. The repository features several examples showcasing different functionalities like data textures, raycasting, custom shaders, blending, and interactive segmentation.
 
 ## Table of Contents
 
 - [Features](#features)
-- [Demo](#demo)
+- [Examples](#examples)
 - [Getting Started](#getting-started)
   - [Prerequisites](#prerequisites)
   - [Installation](#installation)
-- [Usage](#usage)
-  - [Running the Example](#running-the-example)
-  - [Interacting with the Scene](#interacting-with-the-scene)
+- [Running the Examples](#running-the-examples)
+  - [Switching Between Examples](#switching-between-examples)
 - [Project Structure](#project-structure)
+- [Usage](#usage)
+  - [Creating a Custom Example](#creating-a-custom-example)
 - [Customization](#customization)
-  - [Changing Geometry](#changing-geometry)
-  - [Modifying Material](#modifying-material)
-  - [Using Custom Shaders](#using-custom-shaders)
+  - [Modifying Geometries](#modifying-geometries)
+  - [Adjusting Materials](#adjusting-materials)
+  - [Implementing Custom Shaders](#implementing-custom-shaders)
 - [Contributing](#contributing)
 - [License](#license)
+- [Acknowledgments](#acknowledgments)
+- [Feedback](#feedback)
 
 ## Features
 
-- **WebGL Renderer**: Initializes a WebGL context and handles rendering the scene.
+- **WebGL Renderer (`miniGL`)**: A minimal WebGL rendering library with core components.
 - **Scene Graph**: Manages objects within the scene.
 - **Geometries**: Includes `PlaneGeometry` and `BoxGeometry`.
 - **Materials**: Supports `MeshBasicMaterial` and `ShaderMaterial`.
+- **Textures**: Handles image textures and data textures (`Texture`, `DataTexture`).
 - **Camera**: An `OrthographicCamera` with pan and zoom capabilities.
-- **Interactivity**: Mouse controls for panning and zooming.
+- **Interactivity**: Mouse controls for panning, zooming, and object interaction.
+- **Raycaster**: For detecting mouse intersections with objects.
+- **Examples**: Multiple examples demonstrating various features.
 
-## Demo
+## Examples
 
-*Since this is a local project, please run it on your machine to view the demo.*
+The project includes the following examples:
+
+- **Basic Example (`basic.js`)**: Renders a simple plane with basic material.
+- **Custom Shader Example (`shader.js`)**: Demonstrates how to use custom vertex and fragment shaders.
+- **Data Texture Example (`data.js`)**: Shows how to create and render data textures.
+- **Texture Example (`texture.js`)**: Displays an image texture on a plane.
+- **Raycaster Example (`raycaster.js`)**: Implements mouse interaction to read data texture values.
+- **Segmentation Example (`segmentation.js`)**: Interactive segmentation using a brush tool with real-time statistics.
+- **Blending Example (`blend.js`)**: Demonstrates blending and transparency.
 
 ## Getting Started
 
 ### Prerequisites
 
-- A modern web browser that supports WebGL (e.g., Chrome, Firefox, Edge).
-- Basic understanding of HTML, CSS, and JavaScript.
-- Internet connection to load the `gl-matrix` library via CDN.
+- **Node.js and npm**: Ensure you have [Node.js](https://nodejs.org/) and npm installed.
+- **Modern Web Browser**: A browser that supports WebGL (e.g., Chrome, Firefox, Edge).
 
 ### Installation
 
 1. **Clone the Repository**
 
    ```bash
-   git clone https://github.com/your-username/webgl-renderer-example.git
+   git clone https://github.com/your-username/webgl-renderer-examples.git
    ```
 
 2. **Navigate to the Project Directory**
 
    ```bash
-   cd webgl-renderer-example
+   cd webgl-renderer-examples
    ```
 
-3. **Open the HTML File**
+3. **Install Dependencies**
 
-   Open `index.html` in your preferred web browser.
+   ```bash
+   npm install
+   ```
 
-## Usage
+## Running the Examples
 
-### Running the Example
+1. **Start the Development Server**
 
-1. **Open `index.html`**
+   ```bash
+   npm run dev
+   ```
 
-   - You can double-click the `index.html` file, or
-   - Drag and drop it into your browser.
+   This command uses Vite to start a local development server.
 
-2. **View the Scene**
+2. **Open in Browser**
 
-   - A colored plane should appear on the screen.
-   - The plane can be interacted with using mouse controls.
+   Open your web browser and navigate to `http://localhost:3000` (the port number may vary; check the console output).
 
-### Interacting with the Scene
+3. **Interact with the Example**
 
-- **Pan the View**
+   The default example (`segmentation.js`) will be running. You can interact with it as described in the [Examples](#examples) section.
 
-  - **Click and Drag**: Click anywhere on the canvas and drag the mouse to pan.
-  - **Effect**: Moves the camera's position horizontally and vertically.
+### Switching Between Examples
 
-- **Zoom In and Out**
+To switch between different examples:
 
-  - **Scroll Wheel**: Use the mouse scroll wheel to zoom in or out.
-  - **Effect**: Adjusts the camera's zoom level.
+1. **Open `main.js` in the Project Root**
+
+2. **Comment/Uncomment the Example You Want to Run**
+
+   ```javascript
+   // Import statements...
+   // basicExample();
+   // customShaderExample();
+   // dataTextureExample();
+   // textureExample();
+   // dataTextureRaycastExample();
+   segmentationExample(); // This example is currently active
+   // blendingExample();
+   ```
+
+   Uncomment the example you want to run and comment out the others.
+
+3. **Save the File**
+
+   Vite will automatically reload the page with the selected example.
 
 ## Project Structure
 
-- **`index.html`**: Main HTML file containing the canvas element and the script.
-- **JavaScript Classes**:
-  - **`WebGLRenderer`**: Manages the WebGL rendering context and renders the scene.
-  - **`Scene`**: Holds and manages all objects within the scene.
-  - **`Geometry`**: Base class for geometries.
-    - **`PlaneGeometry`**: Defines a plane geometry.
-    - **`BoxGeometry`**: (Optional) Defines a box geometry (full implementation needed).
-  - **`Material`**: Base class for materials.
-    - **`MeshBasicMaterial`**: Simple material with a solid color.
-    - **`ShaderMaterial`**: Material for custom shaders.
-  - **`Mesh`**: Combines geometry and material into a renderable object.
-  - **`OrthographicCamera`**: Camera with orthographic projection and pan/zoom controls.
-- **Utility Functions**:
-  - **`compileShader`**: Compiles GLSL shader source code.
-  - **`createProgram`**: Links vertex and fragment shaders into a shader program.
+- **`index.html`**: Main HTML file that includes the app root and script imports.
+- **`main.js`**: Entry point for the application; selects which example to run.
+- **`miniGL/`**: Directory containing the `miniGL` library source code.
+  - **`renderer.js`**: Manages the WebGL rendering context and renders the scene.
+  - **`mesh.js`**: Defines the `Mesh` class.
+  - **`material.js`**: Contains material classes like `MeshBasicMaterial` and `ShaderMaterial`.
+  - **`geometry.js`**: Provides geometry classes like `PlaneGeometry` and `BoxGeometry`.
+  - **`texture.js`**: Handles textures (`Texture` and `DataTexture` classes).
+  - **`camera.js`**: Implements the `OrthographicCamera` with controls.
+  - **`controls.js`**: Contains camera control classes for interaction.
+  - **`raycaster.js`**: Implements raycasting for object intersection.
+  - **`webgl.js`**: Utility functions for shader compilation and program creation.
+- **`examples/`**: Directory containing example scripts.
+  - **`basic.js`**: Basic rendering example.
+  - **`shader.js`**: Custom shader example.
+  - **`data.js`**: Data texture example.
+  - **`texture.js`**: Image texture example.
+  - **`raycaster.js`**: Raycasting example.
+  - **`segmentation.js`**: Segmentation with brush tool and statistics.
+  - **`blend.js`**: Blending and transparency example.
+
+## Usage
+
+### Creating a Custom Example
+
+1. **Create a New File in `examples/`**
+
+   For example, `myExample.js`.
+
+2. **Import Necessary Modules**
+
+   ```javascript
+   import { WebGLRenderer, Scene, OrthographicCamera, PlaneGeometry, Mesh, MeshBasicMaterial, CameraControls } from '../miniGL';
+   ```
+
+3. **Set Up the Scene**
+
+   ```javascript
+   export const myExample = () => {
+     // Set up code here...
+   };
+   ```
+
+4. **Update `main.js`**
+
+   Import and activate your new example:
+
+   ```javascript
+   import { myExample } from './examples/myExample';
+   myExample();
+   ```
 
 ## Customization
 
-### Changing Geometry
+### Modifying Geometries
 
-You can change the geometry from a plane to a box or any other geometry you implement.
+You can change the geometry of objects in the scene.
 
 **Example: Using `BoxGeometry`**
 
 ```javascript
-// Replace PlaneGeometry with BoxGeometry
+import { BoxGeometry } from '../miniGL';
+
 const geometry = new BoxGeometry(1, 1, 1); // Width, Height, Depth
 ```
 
-### Modifying Material
+### Adjusting Materials
 
-Change the color or type of material used for the mesh.
+Customize the appearance by modifying material properties.
 
-**Example: Changing Material Color**
+**Example: Changing Material Color and Transparency**
 
 ```javascript
-const material = new MeshBasicMaterial({ color: [1, 0, 0, 1] }); // Red color
+const material = new MeshBasicMaterial({
+  color: [0.5, 0.8, 0.2, 0.7], // RGBA values
+  transparent: true,
+});
 ```
 
-### Using Custom Shaders
+### Implementing Custom Shaders
 
-Implement custom shaders using `ShaderMaterial`.
+Use `ShaderMaterial` to apply custom shaders.
 
-**Example: Using `ShaderMaterial`**
+**Example: Creating a Gradient Effect**
 
 ```javascript
-const customMaterial = new ShaderMaterial({
-    vertexShader: `
-        attribute vec3 a_position;
-        uniform mat4 u_projectionMatrix;
-        uniform mat4 u_viewMatrix;
-        uniform mat4 u_modelMatrix;
-        void main() {
-            gl_Position = u_projectionMatrix * u_viewMatrix * u_modelMatrix * vec4(a_position, 1.0);
-        }
-    `,
-    fragmentShader: `
-        precision mediump float;
-        void main() {
-            gl_FragColor = vec4(gl_FragCoord.x / 500.0, 0.5, 0.5, 1.0); // Gradient effect
-        }
-    `,
-    uniforms: {
-        u_projectionMatrix: {},
-        u_viewMatrix: {},
-        u_modelMatrix: {},
-    },
-    attributes: {
-        a_position: {},
-    },
+const material = new ShaderMaterial({
+  vertexShader: `
+    attribute vec3 a_position;
+    uniform mat4 u_projectionMatrix;
+    uniform mat4 u_viewMatrix;
+    uniform mat4 u_modelMatrix;
+    void main() {
+      gl_Position = u_projectionMatrix * u_viewMatrix * u_modelMatrix * vec4(a_position, 1.0);
+    }
+  `,
+  fragmentShader: `
+    precision mediump float;
+    void main() {
+      gl_FragColor = vec4(gl_FragCoord.x / 500.0, gl_FragCoord.y / 500.0, 0.5, 1.0);
+    }
+  `,
+  uniforms: {
+    u_projectionMatrix: {},
+    u_viewMatrix: {},
+    u_modelMatrix: {},
+  },
+  attributes: {
+    a_position: {},
+  },
 });
-
-const mesh = new Mesh(geometry, customMaterial);
-scene.add(mesh);
 ```
 
 ## Contributing
@@ -201,43 +270,49 @@ Contributions are welcome! If you'd like to contribute, please follow these step
 
 This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
 
----
-
-**Note**: Ensure that the `gl-matrix` library is included in your HTML file via the CDN link provided.
-
----
-
-If you have any questions or need further assistance, feel free to reach out.
-
----
-
 ## Acknowledgments
 
 - [gl-matrix](http://glmatrix.net/) for matrix and vector operations.
 - Inspired by [THREE.js](https://threejs.org/).
+- Built using [Vite](https://vitejs.dev/) for development server and bundling.
 
-# Instructions for Running the Example
+## Feedback
 
-1. **Include the `gl-matrix` Library**
-
-   The `gl-matrix` library is included via a CDN in the `<head>` of `index.html`:
-
-   ```html
-   <script src="https://cdnjs.cloudflare.com/ajax/libs/gl-matrix/2.8.1/gl-matrix-min.js"></script>
-   ```
-
-2. **Open `index.html` in a Browser**
-
-   Make sure to use a browser that supports WebGL. Simply opening the file should suffice.
-
-3. **Interact with the Canvas**
-
-   - **Pan**: Click and drag to move around.
-   - **Zoom**: Use the mouse wheel to zoom in and out.
+If you have suggestions or improvements, please open an issue or submit a pull request.
 
 ---
 
-# Troubleshooting
+Happy coding!
+
+---
+
+# Additional Information
+
+## Installing Dependencies
+
+This project uses npm for package management. The `gl-matrix` library and other dependencies are installed via npm and imported as ES modules.
+
+## Development Scripts
+
+- **Start Development Server**
+
+  ```bash
+  npm run dev
+  ```
+
+- **Build for Production**
+
+  ```bash
+  npm run build
+  ```
+
+- **Preview Production Build**
+
+  ```bash
+  npm run preview
+  ```
+
+## Troubleshooting
 
 - **WebGL Support**
 
@@ -247,20 +322,74 @@ If you have any questions or need further assistance, feel free to reach out.
 
   Open the developer console to check for any JavaScript errors.
 
-  - **ReferenceError**: Ensure all classes are defined before they are used.
+  - **Module Not Found**: Ensure all imports are correct and dependencies are installed.
   - **Shader Compilation Errors**: Check shader code for syntax errors.
 
 - **Canvas Not Displaying Correctly**
 
-  Ensure the canvas dimensions are set correctly and that the `resizeCanvasToDisplaySize` function is working.
+  Ensure the canvas dimensions are set correctly and that the `resize` function is working.
 
+## Interacting with the Examples
+
+### Segmentation Example (`segmentation.js`)
+
+- **Brush Size Adjustment**
+
+  Use the brush size slider in the top-right corner to adjust the size of the brush.
+
+- **Mode Toggle**
+
+  Click the "Mode" button to switch between "Add" and "Remove" modes for the segmentation mask.
+
+- **Drawing**
+
+  Click and drag on the canvas to draw with the brush. The segmentation mask will update in real-time.
+
+- **Statistics**
+
+  Real-time statistics (mean, min, max, standard deviation, and count) of the masked region are displayed.
+
+### Raycaster Example (`raycaster.js`)
+
+- **Data Inspection**
+
+  Move the mouse over the canvas to inspect data values at different points.
+
+- **Click Interaction**
+
+  Click on the canvas to log UV coordinates and data values to the console.
 
 ---
 
-# Feedback
-
-If you have suggestions or improvements, please open an issue or submit a pull request.
+Feel free to explore the different examples and modify the code to better understand how each component works.
 
 ---
 
-Happy coding!
+# Note on `miniGL` Library
+
+The `miniGL` library is a minimalistic WebGL library created for educational purposes. It provides a simplified interface for common WebGL operations, making it easier to get started with WebGL programming without the overhead of larger libraries.
+
+Key components include:
+
+- **Renderer**: Manages the WebGL context and rendering loop.
+- **Scene**: Organizes objects in the scene.
+- **Camera**: Handles projection and view matrices.
+- **Geometry**: Defines shapes and structures.
+- **Material**: Defines how objects appear.
+- **Mesh**: Combines geometry and material into renderable objects.
+- **Controls**: Provides interaction capabilities like pan and zoom.
+- **Raycaster**: Enables mouse interaction with objects.
+
+---
+
+# Getting Help
+
+If you encounter issues or have questions:
+
+- **Check the Documentation**: Review comments and documentation within the code.
+- **Search Online**: Look for solutions related to WebGL and the specific issue.
+- **Open an Issue**: If you believe there's a problem with the code, open an issue in the repository.
+
+---
+
+Enjoy experimenting with WebGL and creating your own interactive graphics applications!
