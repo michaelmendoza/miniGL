@@ -86,7 +86,7 @@ export const segmentationExample = () => {
     scene.add(maskMesh);
 
     // Camera controls
-    const controls = new CameraControls(camera, renderer, canvas);
+    const controls = new CameraControls(camera, renderer, canvas, { useDrag: false });
 
     // Raycaster
     const raycaster = new Raycaster();
