@@ -1,4 +1,11 @@
 import { DataTextureRaycaster } from './raycaster.js'
+import { PlaneGeometry } from './geometry.js'
+import { DataTexture } from './texture.js';
+import { WebGLRenderer, Scene } from './renderer.js';
+import { OrthographicCamera } from './camera.js';
+import { CameraControls } from './controls.js';
+import { MeshBasicMaterial } from './material.js';
+import { Mesh } from './mesh.js';
 
 export class DataStats {
 
@@ -39,14 +46,14 @@ export class DataStats {
 }
 
 export class DataBrush { 
-    constructor(dataTexture, brushSize) {
+    constructor(dataTexture, brushSize = 10) {
         this.dataTexture = dataTexture;
         this.brushSize = brushSize;
         this.mode = 'add'; // or 'remove'
     }
 
     applyBrushToData = (centerX, centerY) => {
-        const radius = this.brushSize / 2;
+        const radius = (this.brushSize + 1 ) / 2;
 
         for (let y = -radius; y < radius; y++) {
             for (let x = -radius; x <= radius; x++) {
@@ -60,7 +67,7 @@ export class DataBrush {
 
                     // Check bounds
                     if (imgX >= 0 && imgX < this.dataTexture.width && imgY >= 0 && imgY < this.dataTexture.height) {
-                        const index = imgY * this.dataTexture.width + imgX;
+                        const index = Math.round(imgY) * this.dataTexture.width + Math.round(imgX);
 
                         if (this.mode === 'add') {
                             this.dataTexture.data[index] = 255;
@@ -73,18 +80,72 @@ export class DataBrush {
         }
     }    
 }
+export class DataLayerCanvas {
+    constructor(renderer, width = 256, height = 256) {
+        this.type = 'data';
+        this.width = width;
+        this.height = height;
+        this.geometry = new PlaneGeometry(2, 2);
+        this.dataArray = new Uint8Array(width * height);
 
-export class DataSegmentationMask {
-    constructor(dataTexture, maskTexture, canvas, scene, camera, brushSize) {
-        this.canvas = canvas;
-        this.dataTexture = dataTexture;
-        this.maskTexture = maskTexture;
-        this.dataRaycaster = new DataTextureRaycaster(dataTexture, canvas, scene, camera);
-        this.maskRaycaster = new DataTextureRaycaster(maskTexture, canvas, scene, camera);
-        this.dataStats = new DataStats();
-        this.maskBrush = new DataBrush(maskTexture, brushSize);
+        this.texture = new DataTexture(renderer.gl, {
+            data: this.dataArray,
+            width: this.width,
+            height: this.height,
+        });
+        this.material = new MeshBasicMaterial({
+            color: [1, 1, 1, 1], // White color to see the texture as is
+            map: this.texture
+        });
+        this.mesh = new Mesh(this.geometry, this.material);
+        this.raycaster  = new DataTextureRaycaster(this.texture, renderer.canvas, renderer.camera, [this.mesh]);
+    }
+
+    setData(dataArray) {
+        this.dataArray = dataArray;
+        this.texture.data = dataArray;
+    }
+
+    updateData(update) {
+        update(this.dataArray, this.width, this.height);
+        this.texture.update(this.dataArray);
+    }
+
+    raycast = (event, onRaycast = null) => {
+        this.raycaster.intersectData(event, (data) => {
+            if (data !== null && onRaycast !== null) {
+                onRaycast(data);
+            }
+        })
+    }
+}
+
+export class MaskLayerCanvas {
+    constructor(renderer, width = 256, height = 256) {
+        this.type = 'mask';
+        this.width = width;
+        this.height = height;
+        this.geometry = new PlaneGeometry(2, 2);
+        this.dataArray = new Uint8Array(width * height);
+
+        this.texture = new DataTexture(renderer.gl, {
+            data: this.dataArray,
+            width: this.width,
+            height: this.height,
+        });
+        this.material = new MeshBasicMaterial({
+            color: [1, 0, 0, 0.5], // Semi-transparent red
+            map: this.texture,
+            transparent: true,
+        });
+        this.mesh = new Mesh(this.geometry, this.material);
+        this.raycaster  = new DataTextureRaycaster(this.texture, renderer.canvas, renderer.camera, [this.mesh]);
         this.isDrawing = false;
-    };
+        this.maskBrush = new DataBrush(this.texture);
+        this.dataStats = new DataStats();
+
+        this.mesh.translate(0, 0, 0.01);
+    }
 
     setBrushSize = (brushSize) => {
         this.maskBrush.brushSize = brushSize;
@@ -94,76 +155,121 @@ export class DataSegmentationMask {
         this.maskBrush.mode = mode;
     }
 
-    /** Creates event listeners for mouse interactions */
-    setEventListeners = (onMouseMove, onMouseLeave, onUpdate) => {
-
-        const canvas = this.canvas;
-        this.onMouseMove = onMouseMove;
-        this.onMouseLeave = onMouseLeave;
-        this.onUpdate = onUpdate;
-
-        // Mouse down event listener to start drawing
-        this.canvas.addEventListener('mousedown', (event) => {
-            this.isDrawing = true;
-            this.update(event);
-        });
-
-        // Mouse up event listener to stop drawing
-        this.canvas.addEventListener('mouseup', () => {
-            this.isDrawing = false;
-        });
-
-        canvas.addEventListener('mousemove', (event) => {
-            if (this.isDrawing) {
-                this.update(event);
+    raycast = (event, onRaycast = null) => {
+        this.raycaster.intersectData(event, (data) => {
+            if (data !== null && onRaycast) {
+                onRaycast(data);
             }
 
-            this.dataRaycaster.intersectData(event, (data) => {     
-                if (this.onMouseMove) {
-                    this.onMouseMove(data);
-                }
-            });   
-        });
-
-        canvas.addEventListener('mouseleave', () => {
-            if (this.onMouseLeave) {
-                this.onMouseLeave();
+            if (data !== null && this.isDrawing) {
+                    this.maskBrush.applyBrushToData(data.x, data.y);
+                    this.texture.update(this.texture.data);
             }
+        })
+    }
+
+}
+
+export class DataCanvas { 
+
+    /** 
+     *  Constructor for DataCanvas class
+     * 
+     *  @param {string} canvasID: ID of the canvas element
+     *  @param {[]} layers: Array of LayerCanvas objects
+     *  @param {{}} handlers: Object with event handlers for mouse events and raycasting (optional)
+     *                   Available: onMouseDown, onMouseUp, onMouseMove, onMouseLeave, onDataLayerRaycast, onMaskLayerRaycast
+     */
+    constructor(canvasID, handlers = {}) {
+
+        this.canvas = document.getElementById(canvasID);
+        this.renderer = new WebGLRenderer({ canvas:this.canvas });
+        this.scene = new Scene();
+        this.aspect = this.canvas.clientWidth / this.canvas.clientHeight;
+        this.camera = new OrthographicCamera(-this.aspect, this.aspect, 1, -1, 0.1, 1000);
+        this.controls = new CameraControls(this.camera, this.renderer, this.canvas, { useDrag: false });
+        this.isMouseDown = false;
+        this.handlers = {  
+                        onMouseDown: () => {}, onMouseUp: () => {}, 
+                        onMouseMove: () => {}, onMouseLeave: () => {}, 
+                        onDataLayerRaycast: () => {}, onMaskLayerRaycast: () => {},
+                        ...handlers,
+        };
+        
+        this.dataLayer = null; // Active data layer
+        this.maskLayer = null; // Active mask layer
+
+        this.renderer.render(this.scene, this.camera);
+
+        this.canvas.addEventListener('mousedown', this.handleMouseDown.bind(this));
+        this.canvas.addEventListener('mouseup', this.handleMouseUp.bind(this));
+        this.canvas.addEventListener('mouseleave', this.handleMouseLeave.bind(this));
+        this.canvas.addEventListener('mousemove', this.handleMouseMove.bind(this));
+    }
+
+    setLayers = (layers) => {
+        this.layers = layers;
+        layers.forEach((layer) => {
+            this.scene.add(layer.mesh);
+            if (layer.type == 'data') { this.dataLayer = layer; } // Store reference to data layer (to last data layer in layers)
+            if (layer.type == 'mask') { this.maskLayer = layer; } // Store reference to active mask layer
         });
     }
 
-    update = (event) => {
-        this.maskRaycaster.intersectData(event, (data) => {  
-            if (data !== null) {
-                this.maskBrush.applyBrushToData(data.x, data.y);                      // Toggle mask values with brush in maskArray
-                this.maskTexture.update(this.maskTexture.data);                       // Update the mask texture with the new mask array
-                this.dataStats.update(this.dataTexture.data, this.maskTexture.data);  // Recalculate statistics
-                if (this.onUpdate) {
-                    this.onUpdate(data);
-                }
-            }
-        });
-    };
-}
-
-class DataLayerCanvas {
-    constructor() {
-        this.texture = new DataTexture(renderer.gl, {
-            data: dataArray,
-            width: width,
-            height: height,
+    setBrushSize = (brushSize) => {
+        this.layers.forEach((layer) => {
+            if (layer.type == 'mask') layer.maskBrush.brushSize = brushSize;
         });
     }
-}
 
-class DataCanvas { 
-    constructor(layers, renderer) {
-        this.renderer = renderer;
-        this.canvas = renderer.canvas;
-        this.camera = renderer.camera;
-
-        this.layers = layers.map((layer) => {
-            return new DataLayerCanvas(layer);
+    setBrushMode = (mode) => {
+        this.layers.forEach((layer) => {
+            if (layer.type == 'mask') layer.maskBrush.mode = mode;
         });
+    }
+
+    render = () => {
+        this.controls.update();
+        this.renderer.render(this.scene, this.camera);
+    }
+
+    handleMouseDown(event) {
+        this.isMouseDown = true;
+        this.maskLayer.isDrawing = true;
+        this.handlers?.onMouseDown(event);
+    }
+
+    handleMouseUp(event) {
+        this.isMouseDown = false;
+        this.maskLayer.isDrawing = false;
+        this.handlers?.onMouseUp(event);
+    }
+
+    handleMouseLeave(event) {
+        this.isMouseDown = false;
+        this.handlers?.onMouseLeave(event);
+    }
+
+    handleMouseMove(event) {
+        // Raycast for data layers
+        this.layers.forEach((layer) => {
+            if (layer.type == 'data') {
+                layer.raycast(event, this.handlers?.onDataLayerRaycast);
+            }
+        });
+
+        // Raycast for mask layers
+        if (this.isMouseDown) {
+            this.layers.forEach((layer) => {
+                if (layer.type == 'mask' && layer.isDrawing) {
+                    layer.raycast(event);
+                    layer.dataStats.update(this.dataLayer.texture.data, layer.texture.data);
+                    this.handlers?.onMaskLayerRaycast(layer);
+
+                }
+            });
+        }
+
+        this.handlers?.onMouseMove(event);
     }
 }

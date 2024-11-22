@@ -134,11 +134,11 @@ export class Raycaster {
 
 /** DataTextureRaycaster class: Implements raycasting for DataTextures */
 export class DataTextureRaycaster {
-    constructor(texture, canvas, scene, camera) {
+    constructor(texture, canvas, camera, objects) {
         this.texture = texture;
         this.canvas = canvas;
-        this.scene = scene;
         this.camera = camera;
+        this.objects = objects;
         this.raycaster = new Raycaster();    
     }
 
@@ -150,7 +150,7 @@ export class DataTextureRaycaster {
         this.raycaster.setFromCamera(ndcCoords, this.camera);
 
         // Intersect objects in the scene
-        const intersects = this.raycaster.intersectObject(this.scene.children);
+        const intersects = this.raycaster.intersectObject(this.objects);
 
         if (intersects.length > 0) {
             const intersect = intersects[0];
@@ -161,8 +161,8 @@ export class DataTextureRaycaster {
             const v = uv[1];
 
             // Data texture coordinates
-            const x = Math.floor(u * (this.texture.width - 1));
-            const y = Math.floor((1 - v) * (this.texture.height - 1)); // Flip Y axis
+            const x = Math.floor(u * (this.texture.width - 1) + 0.5);
+            const y = Math.floor((1 - v) * (this.texture.height - 1) + 0.5); // Flip Y axis
 
             const index = y * this.texture.width + x;
             const value = this.texture.data[index];

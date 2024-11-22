@@ -68,7 +68,7 @@ export const dataTextureRaycastExample = () => {
     animate();
 
     // Raycaster
-    const raycaster = new DataTextureRaycaster(texture, canvas, scene, camera);
+    const raycaster = new DataTextureRaycaster(texture, canvas, camera, scene.children);
 
     // Canvas click event listener
     canvas.addEventListener('click', (event) => {

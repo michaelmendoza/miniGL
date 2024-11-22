@@ -6,7 +6,8 @@ import { Mesh } from './mesh.js'
 import { CameraControls } from './controls.js'
 import { Texture, DataTexture } from './texture.js'
 import { Raycaster, DataTextureRaycaster } from './raycaster.js'
-import { DataStats, DataBrush, DataSegmentationMask } from './data.js'
+import { DataStats, DataBrush } from './data.js'
+import { DataCanvas, DataLayerCanvas, MaskLayerCanvas } from './data';
 
 export { 
     Scene, 
@@ -23,5 +24,7 @@ export {
     DataTextureRaycaster,
     DataStats,
     DataBrush,
-    DataSegmentationMask
+    DataLayerCanvas, 
+    MaskLayerCanvas,
+    DataCanvas
 }
