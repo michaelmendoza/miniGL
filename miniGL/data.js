@@ -196,8 +196,10 @@ export class DataCanvas {
                         ...handlers,
         };
         
-        this.dataLayer = null; // Active data layer
-        this.maskLayer = null; // Active mask layer
+        this.layers = [];       // Array of layers
+        this.dataLayer = null;  // Active data layer
+        this.maskLayer = null;  // Active mask layer
+        this.maskLayers = [];   // Array of mask layers
 
         this.renderer.render(this.scene, this.camera);
 
@@ -212,19 +214,22 @@ export class DataCanvas {
         layers.forEach((layer) => {
             this.scene.add(layer.mesh);
             if (layer.type == 'data') { this.dataLayer = layer; } // Store reference to data layer (to last data layer in layers)
-            if (layer.type == 'mask') { this.maskLayer = layer; } // Store reference to active mask layer
+            if (layer.type == 'mask') { 
+                this.maskLayer = layer;         // Store reference to active mask layer
+                this.maskLayers.push(layer);    // Store reference to mask layer
+            } 
         });
     }
 
     setBrushSize = (brushSize) => {
-        this.layers.forEach((layer) => {
-            if (layer.type == 'mask') layer.maskBrush.brushSize = brushSize;
+        this.maskLayers.forEach((layer) => {
+            layer.maskBrush.brushSize = brushSize;
         });
     }
 
     setBrushMode = (mode) => {
-        this.layers.forEach((layer) => {
-            if (layer.type == 'mask') layer.maskBrush.mode = mode;
+        this.maskLayers.forEach((layer) => {
+            layer.maskBrush.mode = mode;
         });
     }
 
@@ -235,13 +240,17 @@ export class DataCanvas {
 
     handleMouseDown(event) {
         this.isMouseDown = true;
-        this.maskLayer.isDrawing = true;
+        if (this.maskLayer) {
+            this.maskLayer.isDrawing = true;
+        }
         this.handlers?.onMouseDown(event);
     }
 
     handleMouseUp(event) {
         this.isMouseDown = false;
-        this.maskLayer.isDrawing = false;
+        if (this.maskLayer) {
+            this.maskLayer.isDrawing = false;
+        }
         this.handlers?.onMouseUp(event);
     }
 
@@ -259,15 +268,10 @@ export class DataCanvas {
         });
 
         // Raycast for mask layers
-        if (this.isMouseDown) {
-            this.layers.forEach((layer) => {
-                if (layer.type == 'mask' && layer.isDrawing) {
-                    layer.raycast(event);
-                    layer.dataStats.update(this.dataLayer.texture.data, layer.texture.data);
-                    this.handlers?.onMaskLayerRaycast(layer);
-
-                }
-            });
+        if (this.isMouseDown && this.maskLayer && this.maskLayer.isDrawing) { 
+            this.maskLayer.raycast(event);
+            this.maskLayer.dataStats.update(this.dataLayer.texture.data, this.maskLayer.texture.data);
+            this.handlers?.onMaskLayerRaycast(this.maskLayer);
         }
 
         this.handlers?.onMouseMove(event);

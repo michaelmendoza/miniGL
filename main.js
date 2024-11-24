@@ -5,7 +5,7 @@ import { dataTextureExample } from './examples/data'
 import { textureExample } from './examples/texture'
 import { dataTextureRaycastExample } from './examples/raycaster'
 import { blendingExample } from './examples/blend'
-import { dataCanvasExample } from './examples/datacanvas'
+import { dataCanvasExample } from './examples/datacanvas_v2'
 
 //basicExample()
 //customShaderExample()
