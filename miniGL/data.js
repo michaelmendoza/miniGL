@@ -121,12 +121,13 @@ export class DataLayerCanvas {
 }
 
 export class MaskLayerCanvas {
-    constructor(renderer, width = 256, height = 256) {
+    constructor(renderer, width = 256, height = 256, color = [1, 0, 0], opacity = 0.5) {
         this.type = 'mask';
         this.width = width;
         this.height = height;
         this.geometry = new PlaneGeometry(2, 2);
         this.dataArray = new Uint8Array(width * height);
+        this.opacity = opacity; // Default opacity value
 
         this.texture = new DataTexture(renderer.gl, {
             data: this.dataArray,
@@ -134,8 +135,9 @@ export class MaskLayerCanvas {
             height: this.height,
         });
         this.material = new MeshBasicMaterial({
-            color: [1, 0, 0, 0.5], // Semi-transparent red
+            color: [color[0], color[1], color[2], this.opacity], // Semi-transparent red
             map: this.texture,
+            alphaMap: this.texture,
             transparent: true,
         });
         this.mesh = new Mesh(this.geometry, this.material);

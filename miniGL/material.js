@@ -20,22 +20,24 @@ export class MeshBasicMaterial extends Material {
         super();
         this.color = params.color || [1, 1, 1, 1];
         this.map = params.map || null; 
+        this.alphaMap = params.alphaMap || null;
         this.transparent = params.transparent || false;
         this.depthTest = params.depthTest !== undefined ? params.depthTest : true;
         this.depthWrite = params.depthWrite !== undefined ? params.depthWrite : !this.transparent;
 
         const useMap = this.map !== null;
+        const useAlphaMap = this.alphaMap !== null;
 
         this.vertexShaderSrc = `
             attribute vec3 a_position;
-            ${useMap ? 'attribute vec2 a_uv;' : ''}
+            ${useMap || useAlphaMap ? 'attribute vec2 a_uv;' : ''}
             uniform mat4 u_projectionMatrix;
             uniform mat4 u_viewMatrix;
             uniform mat4 u_modelMatrix;
-            ${useMap ? 'varying vec2 v_uv;' : ''}
+            ${useMap || useAlphaMap ? 'varying vec2 v_uv;' : ''}
 
             void main() {
-                ${useMap ? 'v_uv = a_uv;' : ''}
+                ${useMap || useAlphaMap ? 'v_uv = a_uv;' : ''}
                 gl_Position = u_projectionMatrix * u_viewMatrix * u_modelMatrix * vec4(a_position, 1.0);
             }
         `;
@@ -43,12 +45,17 @@ export class MeshBasicMaterial extends Material {
             precision mediump float;
             uniform vec4 u_color;
             ${useMap ? 'uniform sampler2D u_map;' : ''}
-            ${useMap ? 'varying vec2 v_uv;' : ''}
+            ${useAlphaMap ? 'uniform sampler2D u_alphaMap;' : ''}
+            ${useMap || useAlphaMap ? 'varying vec2 v_uv;' : ''}
 
             void main() {
                 vec4 baseColor = u_color;
                 ${useMap ? 'vec4 textureColor = texture2D(u_map, v_uv);' : ''}
                 ${useMap ? 'baseColor *= textureColor;' : ''}
+                ${useAlphaMap ? `
+                float alpha = texture2D(u_alphaMap, v_uv).r;
+                baseColor.a *= alpha;
+                ` : ''}
                 gl_FragColor = baseColor;
             }
         `;
@@ -76,6 +83,9 @@ export class MeshBasicMaterial extends Material {
         if (this.map) {
             this.uniformLocations.map = gl.getUniformLocation(this.program, 'u_map');
         }
+        if (this.alphaMap) {
+            this.uniformLocations.alphaMap = gl.getUniformLocation(this.program, 'u_alphaMap');
+        }        
     }
 }
 

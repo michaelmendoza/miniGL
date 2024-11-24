@@ -118,6 +118,13 @@ export class Mesh {
                     gl.bindTexture(gl.TEXTURE_2D, this.material.map.texture);
                     gl.uniform1i(uniformLocation, 0); // Texture unit 0
                 }
+            } else if (uniformName === 'u_alphaMap' || uniformName === 'alphaMap') {
+                if (this.material.alphaMap) {
+                    // Bind the alpha map texture
+                    gl.activeTexture(gl.TEXTURE1);
+                    gl.bindTexture(gl.TEXTURE_2D, this.material.alphaMap.texture);
+                    gl.uniform1i(uniformLocation, 1); // Texture unit 1
+                }
             } else {
                 console.warn(`Uniform '${uniformName}' is not recognized.`);
             }

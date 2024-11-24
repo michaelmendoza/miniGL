@@ -1,6 +1,7 @@
 // examples/datacanvas.js
 
 import { DataCanvas, DataLayerCanvas, MaskLayerCanvas } from '../miniGL';
+import { ColorGenerator } from '../miniGL/color';
 
 export const dataCanvasExample = () => {
 
@@ -158,12 +159,11 @@ export const dataCanvasExample = () => {
     infoDiv.innerHTML = '';
   };
 
+  // Initialize DataCanvas
   const dataCanvas = new DataCanvas('glCanvas', { onDataLayerRaycast, onMaskLayerRaycast, onMouseLeave });
-
-  // Initialize layers
+  const colorGenerator = new ColorGenerator();
   const dataLayer = new DataLayerCanvas(dataCanvas.renderer, 256, 256);
   const initialMaskLayer = new MaskLayerCanvas(dataCanvas.renderer, 256, 256);
-
   dataCanvas.setLayers([dataLayer, initialMaskLayer]);
 
   // Function to update the mask layers list
@@ -202,7 +202,8 @@ export const dataCanvasExample = () => {
 
   // Event listener for adding a new mask layer
   addMaskLayerButton.addEventListener('click', () => {
-    const newMaskLayer = new MaskLayerCanvas(dataCanvas.renderer, 256, 256);
+    const color = colorGenerator.nextColor();
+    const newMaskLayer = new MaskLayerCanvas(dataCanvas.renderer, 256, 256, color, 0.5);
     dataCanvas.layers.push(newMaskLayer);
     dataCanvas.maskLayers.push(newMaskLayer);
     dataCanvas.scene.add(newMaskLayer.mesh);
